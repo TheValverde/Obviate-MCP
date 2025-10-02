@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Kanban For Agents MCP Server
+  kanban-mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kanban-mcp-server
+    ports:
+      - "12007:12007"
+    environment:
+      # API Configuration - Connect to the existing Kanban API running on localhost:12003
+      - KANBAN_API_BASE_URL=http://192.168.0.3:12003
+      - KANBAN_API_VERSION=v1
+      - DEFAULT_TENANT_ID=default
+      
+      # Server Configuration
+      - LOG_LEVEL=INFO
+      - DEBUG_MODE=false
+      - ENABLE_LOGGING=true
+      - LOG_SENSITIVE_DATA=false
+      
+      # Performance Settings
+      - REQUEST_TIMEOUT=30
+      - MAX_RETRIES=3
+      - RETRY_DELAY=1.0
+      
+      # Development Settings
+      - ENABLE_METRICS=false
+      - MCP_SERVER_PORT=12007
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:12007/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
